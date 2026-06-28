@@ -1,4 +1,4 @@
-﻿using Microsoft.eShopWeb.ApplicationCore.Entities;
+using Microsoft.eShopWeb.ApplicationCore.Entities;
 using Microsoft.eShopWeb.ApplicationCore.Entities.BasketAggregate;
 using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.ApplicationCore.Specifications;
@@ -57,7 +57,7 @@ public class BasketViewModelService : IBasketViewModelService
 
         var items = basketItems.Select(basketItem =>
         {
-            var catalogItem = catalogItems.First(c => c.Id == basketItem.CatalogItemId);
+            var catalogItem = catalogItems.FirstOrDefault(c => c.Id == basketItem.CatalogItemId);
 
             var basketItemViewModel = new BasketItemViewModel
             {

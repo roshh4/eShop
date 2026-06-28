@@ -215,3 +215,33 @@ We have some great contributions from the community, and while these aren't main
 [eShopOnWeb VB.NET](https://github.com/VBAndCs/eShopOnWeb_VB.NET) by Mohammad Hamdy Ghanem
 
 [FShopOnWeb](https://github.com/NitroDevs/FShopOnWeb) An F# take on eShopOnWeb by Sean G. Wright and Kyle McMaster
+
+## Induced Bug Information
+
+### Missing Fallback — Basket Crashes When Admin Deletes a Product
+File: `BasketViewModelService.cs`, line 60
+
+Change: This is about removing the existing contingency — change First() to FirstOrDefault() but don't add the null check:
+
+```diff
+var items = basketItems.Select(basketItem =>
+ {
+-    var catalogItem = catalogItems.First(c => c.Id == basketItem.CatalogItemId);
++    var catalogItem = catalogItems.FirstOrDefault(c => c.Id == basketItem.CatalogItemId);
+     var basketItemViewModel = new BasketItemViewModel
+     {
+         Id = basketItem.Id,
+         UnitPrice = basketItem.UnitPrice,
+         Quantity = basketItem.Quantity,
+         CatalogItemId = basketItem.CatalogItemId,
+         PictureUrl = _uriComposer.ComposePicUri(catalogItem.PictureUri),  // NRE here!
+         ProductName = catalogItem.Name  // or here!
+     };
+```
+
+Why it passes local testing: In testing, every basket item always has a matching catalog item in the DB. You'd never think to delete a product while it's in someone's cart.
+
+Why it breaks in production: An admin deletes or deactivates a catalog item via the admin panel. A customer who had that item in their basket before the deletion now gets a NullReferenceException when viewing their basket. FirstOrDefault returns null, and catalogItem.PictureUri explodes. This is a classic "works on my machine, crashes in prod" bug.
+
+What the user reports: "I can't view my shopping cart anymore, it just shows a 500 error. It was working yesterday."
+
